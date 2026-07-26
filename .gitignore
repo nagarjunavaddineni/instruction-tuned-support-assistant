@@ -1,0 +1,16 @@
+.env
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+outputs/
+mlruns/
+mlartifacts/
+data/processed/
+reports/*.json
+*.safetensors
+*.bin
+*.pt
+*.pth
+*.h5

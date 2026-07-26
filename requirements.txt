@@ -1,0 +1,15 @@
+accelerate>=1.2
+datasets>=3.2
+fastapi>=0.115
+mlflow>=3.0
+numpy>=1.26
+optuna>=4.0
+pandas>=2.2
+peft>=0.14
+python-dotenv>=1.0
+scikit-learn>=1.5
+streamlit>=1.41
+torch>=2.5
+transformers>=4.48
+uvicorn[standard]>=0.34
+requests>=2.32
