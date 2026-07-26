@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+
 from sklearn.model_selection import train_test_split
 
 REQUIRED = {"instruction", "input", "response", "category"}
@@ -29,12 +30,25 @@ def write(path, rows):
 def main():
     rows = deduplicate(read_jsonl("data/raw/support_examples.jsonl"))
     labels = [r["category"] for r in rows]
-    train, temp = train_test_split(rows, test_size=.2, random_state=42, stratify=labels)
-    validation, test = train_test_split(temp, test_size=.5, random_state=42, stratify=[r["category"] for r in temp])
+    train, temp = train_test_split(
+        rows, test_size=0.2, random_state=42, stratify=labels
+    )
+    validation, test = train_test_split(
+        temp, test_size=0.5, random_state=42, stratify=[r["category"] for r in temp]
+    )
     out = Path("data/processed")
-    write(out / "train.jsonl", train); write(out / "validation.jsonl", validation); write(out / "test.jsonl", test)
-    report = {"total": len(rows), "train": len(train), "validation": len(validation), "test": len(test)}
-    (out / "dataset_report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+    write(out / "train.jsonl", train)
+    write(out / "validation.jsonl", validation)
+    write(out / "test.jsonl", test)
+    report = {
+        "total": len(rows),
+        "train": len(train),
+        "validation": len(validation),
+        "test": len(test),
+    }
+    (out / "dataset_report.json").write_text(
+        json.dumps(report, indent=2), encoding="utf-8"
+    )
     print(report)
 
 

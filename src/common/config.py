@@ -1,5 +1,6 @@
-from dataclasses import dataclass
 import os
+from dataclasses import dataclass
+
 from dotenv import load_dotenv
 
 
@@ -34,7 +35,9 @@ class TrainingConfig:
             num_epochs=float(os.getenv("NUM_EPOCHS", "2")),
             train_batch_size=int(os.getenv("TRAIN_BATCH_SIZE", "2")),
             eval_batch_size=int(os.getenv("EVAL_BATCH_SIZE", "2")),
-            gradient_accumulation_steps=int(os.getenv("GRADIENT_ACCUMULATION_STEPS", "8")),
+            gradient_accumulation_steps=int(
+                os.getenv("GRADIENT_ACCUMULATION_STEPS", "8")
+            ),
             learning_rate=float(os.getenv("LEARNING_RATE", "0.0002")),
             weight_decay=float(os.getenv("WEIGHT_DECAY", "0.01")),
             warmup_ratio=float(os.getenv("WARMUP_RATIO", "0.05")),
@@ -43,5 +46,6 @@ class TrainingConfig:
             lora_dropout=float(os.getenv("LORA_DROPOUT", "0.05")),
             use_4bit=_bool(os.getenv("USE_4BIT", "false")),
             mlflow_tracking_uri=os.getenv("MLFLOW_TRACKING_URI", "file:./mlruns"),
-            resume_from_checkpoint=os.getenv("RESUME_FROM_CHECKPOINT", "").strip() or None,
+            resume_from_checkpoint=os.getenv("RESUME_FROM_CHECKPOINT", "").strip()
+            or None,
         )
