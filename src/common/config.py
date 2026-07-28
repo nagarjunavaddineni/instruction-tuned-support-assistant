@@ -49,3 +49,19 @@ class TrainingConfig:
             resume_from_checkpoint=os.getenv("RESUME_FROM_CHECKPOINT", "").strip()
             or None,
         )
+
+
+@dataclass(frozen=True)
+class InferenceConfig:
+    model_path: str
+    use_4bit: bool
+    max_history_turns: int
+
+    @classmethod
+    def from_env(cls):
+        load_dotenv()
+        return cls(
+            model_path=os.getenv("INFERENCE_MODEL", "Qwen/Qwen2.5-0.5B-Instruct"),
+            use_4bit=_bool(os.getenv("INFERENCE_USE_4BIT", "false")),
+            max_history_turns=int(os.getenv("MAX_HISTORY_TURNS", "20")),
+        )

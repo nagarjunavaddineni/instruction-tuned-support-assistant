@@ -9,5 +9,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -r requirements.txt -r requirements-dev.txt
-      - run: pytest
+      - run: pytest --cov=src --cov=api --cov-report=term-missing
       - run: ruff check .
+      - run: ruff format --check .
+      - run: mypy src api
