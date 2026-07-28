@@ -1,28 +1,54 @@
-import os
-
 import torch
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
+
+from src.common.config import InferenceConfig
 
 
 class SupportPredictor:
-    def __init__(self, model_path=None):
-        self.path = model_path or os.getenv(
-            "INFERENCE_MODEL", "Qwen/Qwen2.5-0.5B-Instruct"
-        )
+    def __init__(self, model_path=None, config=None):
+        self.config = config or InferenceConfig.from_env()
+        self.path = model_path or self.config.model_path
         self.tok = AutoTokenizer.from_pretrained(self.path)
         self.tok.pad_token = self.tok.pad_token or self.tok.eos_token
+
+        use_cuda = torch.cuda.is_available()
+        quant_config = (
+            BitsAndBytesConfig(
+                load_in_4bit=True,
+                bnb_4bit_compute_dtype=torch.bfloat16,
+                bnb_4bit_quant_type="nf4",
+            )
+            if use_cuda and self.config.use_4bit
+            else None
+        )
         self.model = AutoModelForCausalLM.from_pretrained(
-            self.path, device_map="auto" if torch.cuda.is_available() else None
+            self.path,
+            device_map="auto" if use_cuda else None,
+            dtype=torch.bfloat16 if use_cuda else None,
+            quantization_config=quant_config,
         )
         self.model.eval()
+        self._response_cache: dict[tuple, str] = {}
 
     def generate(self, question, max_new_tokens=256, temperature=0.3, history=None):
+        history = history or []
+        cache_key = None
+        if temperature == 0:
+            cache_key = (
+                question,
+                tuple((h["role"], h["content"]) for h in history),
+                max_new_tokens,
+            )
+            cached = self._response_cache.get(cache_key)
+            if cached is not None:
+                return cached
+
         msgs = [
             {
                 "role": "system",
                 "content": "Return problem summary, likely causes, troubleshooting steps, commands, and prevention tips.",
             },
-            *(history or []),
+            *history,
             {"role": "user", "content": question},
         ]
         text = (
@@ -47,7 +73,11 @@ class SupportPredictor:
             y[0][x["input_ids"].shape[1] :], skip_special_tokens=True
         )
         assert isinstance(decoded, str)
-        return decoded.strip()
+        answer = decoded.strip()
+
+        if cache_key is not None:
+            self._response_cache[cache_key] = answer
+        return answer
 
     @staticmethod
     def _fallback_prompt(msgs):
