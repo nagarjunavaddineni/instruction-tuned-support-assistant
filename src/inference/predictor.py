@@ -16,12 +16,13 @@ class SupportPredictor:
         )
         self.model.eval()
 
-    def generate(self, question, max_new_tokens=256, temperature=0.3):
+    def generate(self, question, max_new_tokens=256, temperature=0.3, history=None):
         msgs = [
             {
                 "role": "system",
                 "content": "Return problem summary, likely causes, troubleshooting steps, commands, and prevention tips.",
             },
+            *(history or []),
             {"role": "user", "content": question},
         ]
         text = (
@@ -29,7 +30,7 @@ class SupportPredictor:
                 msgs, tokenize=False, add_generation_prompt=True
             )
             if self.tok.chat_template
-            else f"System: {msgs[0]['content']}\nUser: {question}\nAssistant:"
+            else self._fallback_prompt(msgs)
         )
         x = self.tok(text, return_tensors="pt")
         d = next(self.model.parameters()).device
@@ -47,3 +48,11 @@ class SupportPredictor:
         )
         assert isinstance(decoded, str)
         return decoded.strip()
+
+    @staticmethod
+    def _fallback_prompt(msgs):
+        lines = [f"System: {msgs[0]['content']}"]
+        for m in msgs[1:]:
+            lines.append(f"{m['role'].capitalize()}: {m['content']}")
+        lines.append("Assistant:")
+        return "\n".join(lines)

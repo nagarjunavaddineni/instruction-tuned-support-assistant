@@ -9,8 +9,8 @@ def test_health():
 
 
 class _StubPredictor:
-    def generate(self, question, max_new_tokens, temperature):
-        return f"stub answer to: {question}"
+    def generate(self, question, max_new_tokens, temperature, history=None):
+        return f"stub answer to: {question} (history turns: {len(history or [])})"
 
 
 def test_generate_returns_model_answer(monkeypatch):
@@ -21,7 +21,52 @@ def test_generate_returns_model_answer(monkeypatch):
     )
 
     assert response.status_code == 200
-    assert response.json() == {"answer": "stub answer to: Why does my build fail?"}
+    assert response.json() == {
+        "answer": "stub answer to: Why does my build fail? (history turns: 0)"
+    }
+
+
+def test_generate_passes_history_to_predictor(monkeypatch):
+    monkeypatch.setattr(api_main, "model", lambda: _StubPredictor())
+
+    response = TestClient(app).post(
+        "/generate",
+        json={
+            "question": "And now?",
+            "history": [
+                {"role": "user", "content": "My build fails."},
+                {"role": "assistant", "content": "Check your logs."},
+            ],
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json() == {"answer": "stub answer to: And now? (history turns: 2)"}
+
+
+def test_generate_rejects_malformed_history(monkeypatch):
+    monkeypatch.setattr(api_main, "model", lambda: _StubPredictor())
+
+    response = TestClient(app).post(
+        "/generate",
+        json={
+            "question": "And now?",
+            "history": [{"role": "narrator", "content": "not a valid role"}],
+        },
+    )
+
+    assert response.status_code == 422
+
+
+def test_generate_rejects_oversized_history(monkeypatch):
+    monkeypatch.setattr(api_main, "model", lambda: _StubPredictor())
+
+    history = [{"role": "user", "content": "hi"} for _ in range(21)]
+    response = TestClient(app).post(
+        "/generate", json={"question": "And now?", "history": history}
+    )
+
+    assert response.status_code == 422
 
 
 def test_generate_rejects_question_too_short(monkeypatch):
