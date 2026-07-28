@@ -128,4 +128,3 @@ git remote add origin https://github.com/YOUR_USERNAME/instruction-tuned-support
 git push -u origin main
 ```
 
-Do not commit trained model checkpoints or `.env`; they are ignored.
