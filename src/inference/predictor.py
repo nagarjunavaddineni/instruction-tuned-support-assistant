@@ -35,13 +35,15 @@ class SupportPredictor:
         d = next(self.model.parameters()).device
         x = {k: v.to(d) for k, v in x.items()}
         with torch.inference_mode():
-            y = self.model.generate(
+            y = self.model.generate(  # type: ignore[misc]
                 **x,
                 max_new_tokens=max_new_tokens,
                 do_sample=temperature > 0,
                 temperature=max(temperature, 1e-5),
                 pad_token_id=self.tok.eos_token_id,
             )
-        return self.tok.decode(
+        decoded = self.tok.decode(
             y[0][x["input_ids"].shape[1] :], skip_special_tokens=True
-        ).strip()
+        )
+        assert isinstance(decoded, str)
+        return decoded.strip()

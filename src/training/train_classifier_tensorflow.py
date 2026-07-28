@@ -2,7 +2,10 @@ import os
 
 import tensorflow as tf
 from datasets import load_dataset
-from transformers import AutoTokenizer, TFAutoModelForSequenceClassification
+from transformers import (  # type: ignore[attr-defined]
+    AutoTokenizer,
+    TFAutoModelForSequenceClassification,
+)
 
 
 def main():
