@@ -6,8 +6,13 @@ data:
 	python -m src.data.prepare_dataset
 
 test:
-	pytest
+	pytest --cov=src --cov=api --cov-report=term-missing
 	ruff check .
+	ruff format --check .
+	mypy src api
+
+lint-fix:
+	pre-commit run --all-files
 
 train-lora:
 	python -m src.training.train_lora
